@@ -1,0 +1,21 @@
+# Ignore development environment files
+.env.dev
+.env
+db.sqlite3
+
+# Ignore common file types
+*.xml
+*.zip
+
+# Ignore IDE and system-generated files
+.idea/
+.idea/* 
+__pycache__/
+__pycache__/*
+
+# Ignore Python virtual environment
+venv/
+
+# Ignore Visual Studio Code settings
+.vscode/
+
