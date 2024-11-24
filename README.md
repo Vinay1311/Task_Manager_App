@@ -67,6 +67,7 @@ The **Task Manager App** is a simple web application built with Django that allo
 
 1. **Clone the Repository**
    ```bash
+   https://github.com/Vinay1311/Task_Manager_App.git
    
 
 ## Install Dependencies
