@@ -12,10 +12,16 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import environ
+import os
+from datetime import timedelta
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-env = environ.Env(DEBUG=bool, ALLOWED_HOSTS=list, CSRF_TRUSTED_ORIGINS=list, ENABLE_SENTRY=bool)
+env = environ.Env(DEBUG=bool, ALLOWED_HOSTS=list, CSRF_TRUSTED_ORIGINS=list)
+
+env_file = BASE_DIR/'.env'
+environ.Env.read_env(env_file=env_file, overwrite=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -24,7 +30,7 @@ env = environ.Env(DEBUG=bool, ALLOWED_HOSTS=list, CSRF_TRUSTED_ORIGINS=list, ENA
 SECRET_KEY = "django-insecure-yg^7vn#l&+1xnj=ruybg+x^v9s2lmc&q%0w5q1x4s8z-je*efn"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
@@ -38,10 +44,21 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.sites',
+
+    # Third party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 
     # application name
+    'base_user',
     'helper',
-    'master',
+    'task_manager',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +70,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    # Allauth middleware
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "task_manager_app.urls"
@@ -80,12 +100,15 @@ WSGI_APPLICATION = "task_manager_app.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'task_manager',
+        'USER': 'postgres',
+        'PASSWORD': '12345',
+        'HOST': 'localhost', 
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -111,6 +134,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+load_dotenv()
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -121,3 +145,53 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+################################### REST FRAMEWORK SETTINGS ##################################
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+################################### All AUth Settings ##################################
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  
+    'allauth.account.auth_backends.AuthenticationBackend', 
+]
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+
+SITE_ID = 2
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE' : ['profile','email'],
+        'APP': {
+            'client_id': env('CLIENT_ID'),
+            'secret': env('CLIENT_SECRET'),
+        },
+        'AUTH_PARAMS': {'access_type':'online',}
+}
+}
+
+################################### AUTH USER MODEL(Custom Add-On Setting) ##################################
+AUTH_USER_MODEL = "base_user.User" 
+
+#################### SIMPLE JWT #########################
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
+}
+
+###################### EMAIL SETTINGS ###################
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST='smtp.gmail.com'  
+EMAIL_PORT = 587  
+EMAIL_HOST_USER = env('EMAIL_HOST_USER') 
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  
+EMAIL_USE_TLS = True  
